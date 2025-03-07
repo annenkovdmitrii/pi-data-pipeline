@@ -1,0 +1,65 @@
+services:
+  sensor-collector:
+    build: ./sensor_collector
+    container_name: sensehat-collector
+    depends_on:
+      - postgres
+    environment:
+      - DB_HOST=postgres
+    privileged: true  # Required for hardware access
+    restart: unless-stopped
+    networks:
+      - sensor-network
+  postgres:
+    image: postgres:14-alpine
+    container_name: sensor-postgres
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: sensordata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    networks:
+      - sensor-network
+
+  dashboard:
+    build: ./dashboard
+    container_name: sensor-dashboard
+    depends_on:
+      - postgres
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./dashboard:/app
+    restart: unless-stopped
+    networks:
+      - sensor-network
+    command: streamlit run /app/app.py --server.port=8501 --server.address=0.0.0.0
+
+  weather-collector:
+    build: ./weather_collector
+    container_name: weather-collector
+    depends_on:
+      - postgres
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=sensordata
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - WEATHER_API_KEY=${WEATHER_API_KEY}
+      - WEATHER_CITY=${WEATHER_CITY}
+    restart: unless-stopped
+    networks:
+      - sensor-network
+
+networks:
+  sensor-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

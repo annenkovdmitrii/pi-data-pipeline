@@ -1,0 +1,7 @@
+streamlit
+psycopg2-binary
+pandas
+matplotlib
+plotly
+streamlit-autorefresh
+sqlalchemy

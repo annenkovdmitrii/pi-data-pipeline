@@ -1,0 +1,3 @@
+sense-hat
+psycopg2-binary
+python-dotenv
