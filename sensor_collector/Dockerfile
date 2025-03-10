@@ -1,5 +1,6 @@
 FROM python:3.9-slim
 
+# Set the working directory
 WORKDIR /app
 
 # Install required packages for Sense HAT
@@ -14,6 +15,9 @@ RUN apt-get update && apt-get install -y \
     cmake \
     && rm -rf /var/lib/apt/lists/*
 
+# Install uv directly with pip
+RUN pip install --no-cache-dir uv
+
 # Install RTIMULib
 RUN git clone https://github.com/RPi-Distro/RTIMULib.git && \
     cd RTIMULib/Linux/python && \
@@ -24,9 +28,10 @@ RUN git clone https://github.com/RPi-Distro/RTIMULib.git && \
 
 # Install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN uv pip install --system --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY sensor_collector_host.py .
 
+# Command to run on container start
 CMD ["python", "sensor_collector_host.py"]
